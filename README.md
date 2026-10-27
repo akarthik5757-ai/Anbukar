@@ -99,3 +99,13 @@ Only trusted project owners should be allowed to edit this role. Never add a pub
 4. For Firebase features to work in the installed app, add your own `app/google-services.json` from Firebase. The file is ignored by `.gitignore` to avoid accidentally publishing project configuration.
 
 The workflow builds a debug APK. It does not create a signed Play Store release. A successful compile does not verify Firebase setup or Firestore rules.
+
+## Correct repository structure and cloud build
+
+Keep the project structure exactly as packaged: `settings.gradle.kts` and root `build.gradle.kts` at the repository root, and Android app files inside `app/`. Do not upload `MainActivity.kt` or `AndroidManifest.xml` by themselves at the repository root.
+
+Two cloud build configurations are included:
+- GitHub Actions: `.github/workflows/main.yml`
+- Codemagic: `codemagic.yaml` (exact filename, no spaces)
+
+The GitHub Actions workflow builds a debug APK and uploads it as the `AnbuTravels-debug-apk` artifact. Firebase features require your own `app/google-services.json`; the project is configured to build without it, but Firebase-backed features will not work until Firebase is configured.
