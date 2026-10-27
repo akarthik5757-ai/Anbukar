@@ -16,43 +16,48 @@ jobs:
     timeout-minutes: 30
 
     steps:
-      - name: Checkout source code
+      - name: Checkout project
         uses: actions/checkout@v7
 
-      - name: Install Java 17
+      - name: Set up Java
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Android SDK
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install SDK packages
+      - name: Install Android SDK packages
         run: |
           sdkmanager --install \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Install Gradle
-        uses: gradle/actions/setup-gradle@v6
-        with:
-          gradle-version: '8.9'
-          cache-provider: basic
-
-      - name: Check required files
+      - name: Install Gradle 8.9
         run: |
-          echo "Project root:"
+          curl -fL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o gradle.zip
+          unzip -q gradle.zip -d "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
+          rm gradle.zip
+
+      - name: Check project files
+        run: |
+          echo "Checking project files..."
+          pwd
           ls -la
-          echo "App files:"
+          echo "Checking app directory..."
           ls -la app
           test -f settings.gradle.kts
           test -f build.gradle.kts
           test -f app/build.gradle.kts
           test -f app/src/main/AndroidManifest.xml
 
-      - name: Build APK
+      - name: Show Gradle version
+        run: gradle --version
+
+      - name: Build debug APK
         run: gradle assembleDebug --stacktrace --no-daemon
 
       - name: Upload APK
