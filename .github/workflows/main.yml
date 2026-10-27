@@ -1,69 +1,41 @@
-name: Build Anbu Travels Android App
 
-'on':
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+workflows:
+  anbu-travels-android:
+    name: Anbu Travels Android APK
+    max_build_duration: 60
+    instance_type: linux_x2
 
-permissions:
-  contents: read
+    environment:
+      java: 17
 
-jobs:
-  build:
-    name: Build Android APK
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-
-    steps:
-      - name: Checkout project
-        uses: actions/checkout@v7
-
-      - name: Set up Java
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '17'
-
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v4
-
-      - name: Install Android SDK packages
-        run: |
-          sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-      - name: Install Gradle 8.9
-        run: |
-          curl -fL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o gradle.zip
-          unzip -q gradle.zip -d "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/gradle-8.9/bin" >> "$GITHUB_PATH"
-          rm gradle.zip
-
-      - name: Check project files
-        run: |
-          echo "Checking project files..."
-          pwd
+    scripts:
+      - name: Check Android project files
+        script: |
+          echo "Checking Anbu Travels project..."
           ls -la
-          echo "Checking app directory..."
-          ls -la app
           test -f settings.gradle.kts
           test -f build.gradle.kts
           test -f app/build.gradle.kts
           test -f app/src/main/AndroidManifest.xml
 
-      - name: Show Gradle version
-        run: gradle --version
+      - name: Configure Android SDK
+        script: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          yes | sdkmanager --licenses
+          sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
 
-      - name: Build debug APK
-        run: gradle assembleDebug --stacktrace --no-daemon
+      - name: Install Gradle
+        script: |
+          curl -fL https://services.gradle.org/distributions/gradle-8.9-bin.zip -o /tmp/gradle.zip
+          unzip -q /tmp/gradle.zip -d /tmp
+          export PATH="/tmp/gradle-8.9/bin:$PATH"
+          gradle --version
 
-      - name: Upload APK
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: AnbuTravels-debug-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+      - name: Build Anbu Travels APK
+        script: |
+          export PATH="/tmp/gradle-8.9/bin:$PATH"
+          gradle assembleDebug --no-daemon --stacktrace
+
+    artifacts:
+      - app/build/outputs/apk/debug/app-debug.apk
+      - app/build/outputs/apk/debug/output-metadata.json
