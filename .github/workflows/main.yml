@@ -1,4 +1,3 @@
-
 name: Build Anbu Travels Android App
 
 'on': [push, workflow_dispatch]
@@ -8,7 +7,6 @@ permissions:
 
 jobs:
   build:
-    name: Build Android APK
     runs-on: ubuntu-24.04
 
     steps:
@@ -24,13 +22,15 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK packages
+        run: |
+          sdkmanager --licenses </dev/null || true
+          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Check project files
-        run: ls -la
 
       - name: Build debug APK
         run: gradle assembleDebug --stacktrace
@@ -42,4 +42,3 @@ jobs:
           name: AnbuTravels-debug-apk
           path: app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
-
